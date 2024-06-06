@@ -44,7 +44,7 @@ def mainPipeline(startup_description, founder_description, mode, model):
     startup_info = "Startup Description:" + startup_description + "Founder Information: " + founder_description
 
     # Get prediction
-    prediction = sideVCScout(startup_info, 'gpt-3.5-turbo')
+    prediction = sideVCScout(startup_info, 'gpt-4-turbo')
 
     # Determine if I need to segment the startup_info myself
     if input("Have you preprocessed it?") == "no":
@@ -147,6 +147,14 @@ def market_analysis(startup_info, mode, model):
         "- Market Trends: {market_trends}\n"
         "Begin your analysis by addressing the timing of market entry, taking into account "
         "the startup's unique position and how similar companies have fared in recent years."
+        "Validate and update the provided market metrics using platforms such as LinkedIn "
+        "and any available data from the Crunchbase, CB Insights, and Diffbot APIs"
+        "You will evaluate the business and market using Porter's five forces, rating the company from 1 to 5 on each dimension with details, insights, and sourced content"
+        "You will identify the drivers for success in this market, if they are defensible, and if this company demonstrates excellence "
+        "with these drivers. You will share the top 5 competitors or threats for the business. If there is a competitor who better exemplifies these drivers that should be noted"
+        "Example: "
+        "Excellence in the Consumer Package Goods market relies on control and dominance of distribution channels. Pepsico has one of the "
+        "largest distribution networks in the world, providing a defensible position for any future product launches"
         "Please think and analyze step by step and take a deep breath."
     ).format(
         description=startup_info.get('description', ""),
@@ -173,7 +181,7 @@ def product_analysis(startup_info, mode, model):
     analysis_prompt = (
         "You're a seasoned product analyst known for your critical evaluations of new technology products. "
         "Today, you're examining a startup's offering with the details provided below:\n\n"
-        "Assess the product's market fit, innovation level, scalability potential, and user reception. "
+        "Assess the product's market fit, innovation level, scalability potential, defensibility, competitive advantage, and user reception. "
         "Investigate the technology behind the product, its differentiators, and any existing user feedback. "
         "Also, review user ratings and feedback on sites such as ProductHunt and G2Crowd to gauge market reception. "
         "Summarize your findings by providing a product viability score from 1 to 10, taking into account "
@@ -253,6 +261,17 @@ def integrate_analyses(market_info, product_info, founder_info, prediction, mode
     
     Recommendation: Hold. The unique product offering taps into an emerging market niche, presenting a potential opportunity. However, the combination of a saturated broader market, challenges in justifying the product's value to consumers, and the team's limited experience in business management suggests waiting for clearer signs of product-market fit and strategic direction.
     
+    Notes for the justifications:
+    Within the Market Viability please include megatrends unique to the industry that are providing headwinds or tail winds, 
+    market fragmentation and ability to capture share, drivers of success in the market and the businesses' ability to execute on them, segmentation of the market 
+    and who the key players are that would need to be beaten to win their corresponding share. Ultimately, regardless of the business being evaluated 
+    you must take a view on if this is a market worth investing in, at all.
+
+    Within Product Viability please include the competitive advantage and defensibility of the business, and the alignment of these strengths with the
+    what is required to capture share in the market. If this company is not well aligned, please highlight another company who may be better 
+    aligned to market capture. Leverage Porter's Five Forces, SWOT analysis, and competitive advantage to justify this position.
+    Also highlight opportunities of unique growth and expansion potential for the business.
+
     Take a deep breath and analyze step by step. Your team has presented you with the following scores & analyses for a new startup:
     
     """
@@ -264,7 +283,8 @@ def integrate_analyses(market_info, product_info, founder_info, prediction, mode
         "Product Viability: {product_info}\n"
         "Founder Competency: {founder_info}\n"
         "Using your expertise, synthesize these scores to present an overall investment recommendation. "
-        "State whether you would advise 'Invest' or 'Hold', including a comprehensive rationale for your decision."
+        "State whether you would advise 'Buy', 'Hold', or 'Sell' including a comprehensive rationale for your decision."
+        "Your criteria for success is an above average return with an opportunity for liquidity in 3 years if you were to buy today."
         "Please think and analyze step by step and take a deep breath."
         "You are very professional and you generate insightful analysis."
     ).format(
@@ -277,7 +297,7 @@ def integrate_analyses(market_info, product_info, founder_info, prediction, mode
         prediction_prompt = f"\n In addition, your model has predicted if the startup will success with 65% accuracy. The outcome is {prediction} Do reference this in your analysis, but don't over-rely on this prediction, as sometimes it gets wrong. "
         user_prompt += prediction_prompt
 
-    return getResponse(prompt, user_prompt, "gpt-4")
+    return getResponse(prompt, user_prompt, "gpt-4-turbo")
 
 
 def startup_info_to_JSON(startup_description, model):
@@ -341,6 +361,8 @@ def startup_info_to_JSON(startup_description, model):
             "regulatory_approvals": "Compliant with all applicable fintech regulations",
             "patents": "2 patents on blockchain transaction algorithms"
         }}
+
+        Any data points not provided should be sourced from crunchbase, CB Insights, or approximated based on market and competitive benchmarks. Any assumptions should be sourced.
         """
     startup_info = getResponse(prompt, f"Now, convert this startup description: {startup_description}", model)
     try:
@@ -366,7 +388,7 @@ def externalMarketKnowledge(startup_info):
     Keywords_Prompt = ("You will assist me in finding external market knowledge about a startup. Think step by step. "
                        "Your task is to summarise the information into 1 keyword that best describes the market that the startup is in. "
                        "Sample Output: Chinese Pharmaceutical Market.")
-    keywords = getResponse(Keywords_Prompt, startup_info, 'gpt-3.5-turbo')
+    keywords = getResponse(Keywords_Prompt, startup_info, 'gpt-4-turbo')
     keywords += ", Growth, Trend, Size, Revenue"
     print("Keywords: ", keywords)
 
@@ -408,7 +430,7 @@ def externalMarketKnowledge(startup_info):
                          "Now please summarise the information as a report about the growth & size of the market, alongside with your existing knowledge"
                          "Also give insights on the timing of entering the market now & also market sentiment. "
                          "Make your response structured and in detail.")
-    market_report = getResponse(Conversion_Prompt, Overall_Knowledge, 'gpt-4')
+    market_report = getResponse(Conversion_Prompt, Overall_Knowledge, 'gpt-4-turbo')
 
     return [keywords, market_report]
 
@@ -465,7 +487,7 @@ def externalProductKnowledge(startup_info, N):
                          "After google search, you are given important context information and data (most of the time)"
                          "Now please summarise the information as a report to highlight the latest information and public sentiment towards the company and its product, alongside with your existing knowledge"
                          "Make your response structured and in detail.")
-    news_report = getResponse(Conversion_Prompt, Overall_Knowledge, 'gpt-4')
+    news_report = getResponse(Conversion_Prompt, Overall_Knowledge, 'gpt-4-turbo')
 
     return news_report
 
@@ -729,9 +751,37 @@ def LevelSegmentation(userContent, model):
     return response
 
 # Testing Area
-test_startup = "Put Your Startup Information."
+test_startup = """
+Beam Dental has revolutionized the dental insurance industry by integrating innovative technology with preventive care. Beam Dental offers comprehensive dental insurance plans that are designed to promote better oral health through the use of connected dental products, such as smart toothbrushes, which track and encourage good dental hygiene habits.
 
-founder_info = "Put your founder description."
+Beam Dental's platform includes a variety of dental benefits, easy-to-use digital tools for both members and providers, and a focus on preventive care to reduce overall dental costs. The company leverages data from its smart toothbrushes to offer personalized insurance rates and rewards for maintaining good dental hygiene, making dental care more affordable and accessible.
 
-print(mainPipeline(test_startup, founder_info,"advanced", "gpt-4" ))
+The service is highly customer-centric, with an emphasis on simplicity and transparency. Members can easily manage their dental benefits, find providers, and track their dental health through Beam’s user-friendly mobile app. This integration of technology and dental care not only enhances the member experience but also improves overall health outcomes.
+
+As of 2024, Beam Dental serves a wide range of clients, including individuals, families, and businesses, demonstrating strong market adoption and customer satisfaction due to its innovative approach and comprehensive service offerings.
+"""
+
+founder_info = """
+Alex Frommeyer is known for his substantial contributions to the health tech industry as the Co-founder and CEO of Beam Dental. Frommeyer has extensive experience in engineering and entrepreneurship, with a focus on leveraging technology to improve healthcare services.
+
+Before founding Beam Dental, Frommeyer co-founded and led Uproar Labs, an engineering incubator. His background in engineering and innovation has been pivotal in shaping Beam Dental’s technology-driven approach to dental insurance.
+
+Frommeyer holds a Bachelor’s degree in Civil Engineering from the University of Louisville. His strong technical background and entrepreneurial spirit have been crucial in driving Beam Dental’s growth and success.
+
+In his current role at Beam Dental, Frommeyer is responsible for overseeing the company’s strategic direction and ensuring the development of innovative products that meet the needs of modern consumers. His leadership has been instrumental in establishing Beam Dental as a pioneer in the insurtech space.
+
+Alex Curry is the Co-founder and COO of Beam Dental, where he plays a key role in the company’s operations and business strategy. Curry has a rich background in operations and engineering, with significant experience in managing technology-driven projects.
+
+Prior to co-founding Beam Dental, Curry worked alongside Frommeyer at Uproar Labs, where he gained valuable experience in product development and operational management. His expertise in operations has been vital in scaling Beam Dental’s services and expanding its market reach.
+
+Curry holds a Bachelor’s degree in Civil Engineering from the University of Louisville. His strong operational skills and strategic vision have been critical in ensuring the efficient management and growth of Beam Dental.
+
+Dan Dykes is the Co-founder and CTO of Beam Dental, leading the technological development and innovation of the company’s platform. Dykes has extensive experience in software engineering and technology management, with a focus on creating scalable and secure systems.
+
+Before co-founding Beam Dental, Dykes also worked at Uproar Labs, where he developed his skills in software development and technology leadership. His technical expertise has been essential in building Beam Dental’s advanced digital infrastructure.
+
+Dykes holds a Bachelor’s degree in Computer Engineering and Computer Science from the University of Louisville. His technical acumen and innovative mindset have been pivotal in driving Beam Dental’s technological advancements and ensuring the platform remains at the cutting edge of the health tech industry.
+"""
+
+print(mainPipeline(test_startup, founder_info,"advanced", "gpt-4-turbo" ))
 
